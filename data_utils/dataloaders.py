@@ -26,7 +26,7 @@ def download_modelnet40():
 	if not os.path.exists(os.path.join(DATA_DIR, 'modelnet40_ply_hdf5_2048')):
 		www = 'https://shapenet.cs.stanford.edu/media/modelnet40_ply_hdf5_2048.zip'
 		zipfile = os.path.basename(www)
-		os.system('wget %s; unzip %s' % (www, zipfile))
+		os.system('wget %s --no-check-certificate; unzip %s' % (www, zipfile)) 
 		os.system('mv %s %s' % (zipfile[:-4], DATA_DIR))
 		os.system('rm %s' % (zipfile))
 
@@ -229,11 +229,11 @@ class RegistrationData(Dataset):
 			self.get_rri = get_rri_cuda if torch.cuda.is_available() else get_rri
 			from .. ops.transform_functions import DeepGMRTransform
 			self.transforms = DeepGMRTransform(angle_range=90, translation_range=1)
-			if 'nearest_neighbors' in self.additional_params.keys() and self.additional_params['nearest_neighbors'] > 0:
-				self.use_rri = True
-				self.nearest_neighbors = self.additional_params['nearest_neighbors']
-			else:
-				self.use_rri = False
+		if 'nearest_neighbors' in self.additional_params.keys() and self.additional_params['nearest_neighbors'] > 0:
+			self.use_rri = True
+			self.nearest_neighbors = self.additional_params['nearest_neighbors']
+		else:
+			self.use_rri = False
 
 	def __len__(self):
 		return len(self.data_class)
@@ -256,7 +256,7 @@ class RegistrationData(Dataset):
 		if self.use_rri:
 			template, source = template.numpy(), source.numpy()
 			template = np.concatenate([template, self.get_rri(template - template.mean(axis=0), self.nearest_neighbors)], axis=1)
-            		source = np.concatenate([source, self.get_rri(source - source.mean(axis=0), self.nearest_neighbors)], axis=1)
+			source = np.concatenate([source, self.get_rri(source - source.mean(axis=0), self.nearest_neighbors)], axis=1)
 			template, source = torch.tensor(template).float(), torch.tensor(source).float()
 
 		igt = self.transforms.igt
